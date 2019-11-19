@@ -21,7 +21,7 @@
 
 #define TURN_TARGET_TICKS 90
 #define TURN_TARGET_TICKS_90 150
-#define DRIVE_TARGET_TICKS 500
+#define DRIVE_TARGET_TICKS 300
 
 
 void Initialize_System();
@@ -149,7 +149,7 @@ int main(void)
                         state = WAIT;
                     }
                     if (bump_data0 == 1)
-                        state = BUMPEDOUTSIDE;
+                        state = SETUP_BACKWARDS;
                     else
                     if (bump_data1 == 1)
                         state = SETUP_BACKWARDS;
