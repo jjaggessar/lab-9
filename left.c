@@ -19,9 +19,9 @@
 #include "Library/HAL_I2C.h"
 #include "Library/HAL_OPT3001.h"
 
-#define TURN_TARGET_TICKS 100
+#define TURN_TARGET_TICKS 90
 #define TURN_TARGET_TICKS_90 150
-#define DRIVE_TARGET_TICKS 250
+#define DRIVE_TARGET_TICKS 500
 
 
 void Initialize_System();
@@ -39,7 +39,9 @@ int tick=0;
 int mytime[20];
 int i=0;
 
+/* Variable for storing lux value returned from OPT3001 */
 float lux;
+
 typedef enum
 {
     START = 0,
@@ -52,7 +54,7 @@ typedef enum
     SETUP_TURN1,
     TURN1,
     SETUP_TURN90,
-    TURN90,
+        TURN90,
     STOP_TURN1,
     SETUP_BUMPEDOUTSIDE,
     BUMPEDOUTSIDE,
@@ -65,9 +67,9 @@ typedef enum
     SETUP_BACKWARDS,
     BACKWARDS,
     SETUP_BACKWARDS2,
-    BACKWARDS2,
-    SETUP_BACKWARDS3,
-    BACKWARDS3,
+        BACKWARDS2,
+        SETUP_BACKWARDS3,
+            BACKWARDS3,
     ALL_DONE
 } my_state_t;
 
@@ -98,7 +100,9 @@ int main(void)
         bump_data4 = BUMP_SWITCH(bump_data,4);
         bump_data5 = BUMP_SWITCH(bump_data,5);
 
-        lux = OPT3001_getLux(); 
+        /* Obtain lux value from the OPT3001 light sensor */
+        lux = OPT3001_getLux();
+
         // Emergency stop switch S2
         // Switch to state "STOP" if pressed
         if (button_S2_pressed()) 
@@ -110,98 +114,62 @@ int main(void)
         //        Main State Machine
         //-----------------------------------
         switch (state) 
-        {
+                {
 
-        case START:
-                state = WAIT;
-        break;
+                case START:
+                        state = WAIT;
+                break;
 
-        case WAIT:
-            if (button_S1_pressed()) 
-            {
-                state = SETUP_DRIVEFORWARD;
-            }
-        break;
-
-
-        case SETUP_DRIVEFORWARD:
-            left_encoder_zero_pos = get_left_motor_count();
-            right_encoder_zero_pos = get_right_motor_count();
-
-            set_left_motor_direction(true);
-            set_right_motor_direction(true);
-
-            state = DRIVEFORWARD;
-        break;
-
-        case DRIVEFORWARD:
-            set_left_motor_direction(true);
-            set_right_motor_direction(true);
-            set_left_motor_pwm(.3);
-            set_right_motor_pwm(.7);
-            if(lux < 10)
-            {  set_left_motor_pwm(0);
-                set_right_motor_pwm(0);
-                state = WAIT;
-            }
-            if (bump_data0 == 1)
-                state = BUMPEDOUTSIDE;
-            else
-            if (bump_data1 == 1)
-                state = SETUP_BACKWARDS;
-            else
-
-            if (bump_data2 == 1)
-                state = SETUP_BACKWARDS3;
-            else
-            if (bump_data3 == 1)
-                state = SETUP_BACKWARDS3;
-            else
-            if (bump_data4 == 1)
-                state = SETUP_BACKWARDS2;
-            else
-            if (bump_data5 == 1)
-            state = BUMPEDOUTSIDE2;
-
-        break;
-
-        case SETUP_TURN1:
-            left_encoder_zero_pos = get_left_motor_count();
-            right_encoder_zero_pos = get_right_motor_count();
-
-            set_left_motor_direction(true);
-            set_right_motor_direction(false);
-
-            left_done = false;
-            right_done = false;
-
-            // Start the motors here so we only have to start them once
-            set_left_motor_pwm(.1);
-            set_right_motor_pwm(.1);
-
-            state = TURN1;
-        break;
+                case WAIT:
+                    if (button_S1_pressed())
+                    {
+                        state = SETUP_DRIVEFORWARD;
+                    }
+                break;
 
 
-        case TURN1:
-            left_done = (get_left_motor_count() - left_encoder_zero_pos) > TURN_TARGET_TICKS;
-            right_done = (get_right_motor_count() - right_encoder_zero_pos) < -TURN_TARGET_TICKS;
+                case SETUP_DRIVEFORWARD:
+                    left_encoder_zero_pos = get_left_motor_count();
+                    right_encoder_zero_pos = get_right_motor_count();
 
-            if (left_done)
-            {
-                set_left_motor_pwm(0);
-            }
+                    set_left_motor_direction(true);
+                    set_right_motor_direction(true);
 
-            if (right_done)
-            {
-                set_right_motor_pwm(0);
-            }
+                    state = DRIVEFORWARD;
+                break;
 
-            if (left_done && right_done) {
-                state = SETUP_DRIVEFORWARD;
-            }
-        break;
-        case SETUP_TURN90:
+                case DRIVEFORWARD:
+                    set_left_motor_direction(true);
+                    set_right_motor_direction(true);
+                    set_left_motor_pwm(.3);
+                    set_right_motor_pwm(.6);
+                    if(lux < 30)
+                    {  set_left_motor_pwm(0);
+                        set_right_motor_pwm(0);
+                        state = WAIT;
+                    }
+                    if (bump_data0 == 1)
+                        state = BUMPEDOUTSIDE;
+                    else
+                    if (bump_data1 == 1)
+                        state = SETUP_BACKWARDS;
+                    else
+
+                    if (bump_data2 == 1)
+                        state = SETUP_BACKWARDS3;
+                    else
+                    if (bump_data3 == 1)
+                        state = SETUP_BACKWARDS3;
+                    else
+                    if (bump_data4 == 1)
+                        state = SETUP_BACKWARDS2;
+                    else
+                    if (bump_data5 == 1)
+                    state = BUMPEDOUTSIDE2;
+
+                break;
+
+                case SETUP_TURN1:
                     left_encoder_zero_pos = get_left_motor_count();
                     right_encoder_zero_pos = get_right_motor_count();
 
@@ -212,16 +180,16 @@ int main(void)
                     right_done = false;
 
                     // Start the motors here so we only have to start them once
-                    set_left_motor_pwm(.4);
-                    set_right_motor_pwm(.4);
+                    set_left_motor_pwm(.3);
+                    set_right_motor_pwm(.3);
 
-                    state = TURN90;
+                    state = TURN1;
                 break;
 
 
-                case TURN90:
-                    left_done = (get_left_motor_count() - left_encoder_zero_pos) > TURN_TARGET_TICKS_90;
-                    right_done = (get_right_motor_count() - right_encoder_zero_pos) < -TURN_TARGET_TICKS_90;
+                case TURN1:
+                    left_done = (get_left_motor_count() - left_encoder_zero_pos) > TURN_TARGET_TICKS;
+                    right_done = (get_right_motor_count() - right_encoder_zero_pos) < -TURN_TARGET_TICKS;
 
                     if (left_done)
                     {
@@ -237,117 +205,116 @@ int main(void)
                         state = SETUP_DRIVEFORWARD;
                     }
                 break;
-        case SETUP_TURNLEFT:
-            left_encoder_zero_pos = get_left_motor_count();
-            right_encoder_zero_pos = get_right_motor_count();
+                case SETUP_TURN90:
+                            left_encoder_zero_pos = get_left_motor_count();
+                            right_encoder_zero_pos = get_right_motor_count();
 
-            set_left_motor_direction(false);
-            set_right_motor_direction(true);
+                            set_left_motor_direction(true);
+                            set_right_motor_direction(false);
 
-            // Start the motors here so we only have to start them once
-            set_left_motor_pwm(.4);
-            set_right_motor_pwm(.4);
+                            left_done = false;
+                            right_done = false;
 
-            left_done = false;
-            right_done = false;
+                            // Start the motors here so we only have to start them once
+                            set_left_motor_pwm(.4);
+                            set_right_motor_pwm(.4);
 
-            state = TURNLEFT;
-         break;
+                            state = TURN90;
+                        break;
 
 
-        case TURNLEFT:
-            left_done = (left_encoder_zero_pos - get_left_motor_count()) > TURN_TARGET_TICKS;
-            right_done = (right_encoder_zero_pos - get_right_motor_count()) < -TURN_TARGET_TICKS;
+                        case TURN90:
+                            left_done = (get_left_motor_count() - left_encoder_zero_pos) > TURN_TARGET_TICKS_90;
+                            right_done = (get_right_motor_count() - right_encoder_zero_pos) < -TURN_TARGET_TICKS_90;
 
-            if (left_done)
-            {
-                set_left_motor_pwm(0);
-            }
+                            if (left_done)
+                            {
+                                set_left_motor_pwm(0);
+                            }
 
-            if(right_done)
-            {
-                set_right_motor_pwm(0);
-            }
+                            if (right_done)
+                            {
+                                set_right_motor_pwm(0);
+                            }
 
-            if (left_done && right_done) {
-                state = SETUP_DRIVEFORWARD;
-            }
-        break;
+                            if (left_done && right_done) {
+                                state = SETUP_DRIVEFORWARD;
+                            }
+                        break;
+                case SETUP_TURNLEFT:
+                    left_encoder_zero_pos = get_left_motor_count();
+                    right_encoder_zero_pos = get_right_motor_count();
 
-        case ALL_DONE:
-            state = WAIT;
-        break;
+                    set_left_motor_direction(false);
+                    set_right_motor_direction(true);
 
-        case SETUP_BUMPEDOUTSIDE:
-            state  = WAIT;
-        break;
+                    // Start the motors here so we only have to start them once
+                    set_left_motor_pwm(.4);
+                    set_right_motor_pwm(.4);
 
-        case BUMPEDOUTSIDE:
-            state = SETUP_TURNLEFT;
-        break;
+                    left_done = false;
+                    right_done = false;
 
-        case SETUP_BUMPEDOUTSIDE2:
-             state  = WAIT;
-        break;
+                    state = TURNLEFT;
+                 break;
 
-        case BUMPEDOUTSIDE2:
-             state = SETUP_TURN1;
-        break;
 
-        case SETUP_BUMPEDINSIDE:
-            state  = WAIT;
-        break;
+                case TURNLEFT:
+                    left_done = (left_encoder_zero_pos - get_left_motor_count()) > TURN_TARGET_TICKS;
+                    right_done = (right_encoder_zero_pos - get_right_motor_count()) < -TURN_TARGET_TICKS;
 
-        case BUMPEDINSIDE:
-            state  = SETUP_BACKWARDS;
-        break;
+                    if (left_done)
+                    {
+                        set_left_motor_pwm(0);
+                    }
 
-        case SETUP_BUMPEDMIDDLE:
-             state = WAIT;
-        break;
+                    if(right_done)
+                    {
+                        set_right_motor_pwm(0);
+                    }
 
-        case BUMPEDMIDDLE:
-             state = WAIT;
-        break;
+                    if (left_done && right_done) {
+                        state = SETUP_DRIVEFORWARD;
+                    }
+                break;
 
-        case SETUP_BACKWARDS:
+                case ALL_DONE:
+                    state = WAIT;
+                break;
 
-                 left_encoder_zero_pos = get_left_motor_count();
-                 right_encoder_zero_pos = get_right_motor_count();
+                case SETUP_BUMPEDOUTSIDE:
+                    state  = WAIT;
+                break;
 
-                 set_left_motor_direction(false);
-                 set_right_motor_direction(false);
+                case BUMPEDOUTSIDE:
+                    state = SETUP_TURNLEFT;
+                break;
 
-                 // Start the motors here so we only have to start them once
-                 set_left_motor_pwm(.4);
-                 set_right_motor_pwm(.4);
+                case SETUP_BUMPEDOUTSIDE2:
+                     state  = WAIT;
+                break;
 
-                 left_done = false;
-                 right_done = false;
+                case BUMPEDOUTSIDE2:
+                     state = SETUP_TURN1;
+                break;
 
-                 state = BACKWARDS;
-        break;
+                case SETUP_BUMPEDINSIDE:
+                    state  = WAIT;
+                break;
 
-        case BACKWARDS:
+                case BUMPEDINSIDE:
+                    state  = SETUP_BACKWARDS;
+                break;
 
-            left_done = (left_encoder_zero_pos - get_left_motor_count()) > DRIVE_TARGET_TICKS;
-            right_done = (right_encoder_zero_pos - get_right_motor_count()) > DRIVE_TARGET_TICKS;
+                case SETUP_BUMPEDMIDDLE:
+                     state = WAIT;
+                break;
 
-            if (left_done)
-            {
-                set_left_motor_pwm(0);
-            }
+                case BUMPEDMIDDLE:
+                     state = WAIT;
+                break;
 
-            if (right_done)
-            {
-                set_right_motor_pwm(0);
-            }
-
-            if (left_done && right_done) {
-                state = SETUP_TURNLEFT;
-            }
-            break;
-        case SETUP_BACKWARDS2:
+                case SETUP_BACKWARDS:
 
                          left_encoder_zero_pos = get_left_motor_count();
                          right_encoder_zero_pos = get_right_motor_count();
@@ -362,10 +329,10 @@ int main(void)
                          left_done = false;
                          right_done = false;
 
-                         state = BACKWARDS2;
+                         state = BACKWARDS;
                 break;
 
-                case BACKWARDS2:
+                case BACKWARDS:
 
                     left_done = (left_encoder_zero_pos - get_left_motor_count()) > DRIVE_TARGET_TICKS;
                     right_done = (right_encoder_zero_pos - get_right_motor_count()) > DRIVE_TARGET_TICKS;
@@ -381,47 +348,86 @@ int main(void)
                     }
 
                     if (left_done && right_done) {
-                        state = SETUP_TURN1;
+                        state = SETUP_TURNLEFT;
                     }
                     break;
-                case SETUP_BACKWARDS3:
+                case SETUP_BACKWARDS2:
 
-                                      left_encoder_zero_pos = get_left_motor_count();
-                                      right_encoder_zero_pos = get_right_motor_count();
+                                 left_encoder_zero_pos = get_left_motor_count();
+                                 right_encoder_zero_pos = get_right_motor_count();
 
-                                      set_left_motor_direction(false);
-                                      set_right_motor_direction(false);
+                                 set_left_motor_direction(false);
+                                 set_right_motor_direction(false);
 
-                                      // Start the motors here so we only have to start them once
-                                      set_left_motor_pwm(.4);
-                                      set_right_motor_pwm(.4);
+                                 // Start the motors here so we only have to start them once
+                                 set_left_motor_pwm(.4);
+                                 set_right_motor_pwm(.4);
 
-                                      left_done = false;
-                                      right_done = false;
+                                 left_done = false;
+                                 right_done = false;
 
-                                      state = BACKWARDS3;
-                             break;
+                                 state = BACKWARDS2;
+                        break;
 
-                             case BACKWARDS3:
+                        case BACKWARDS2:
 
-                                 left_done = (left_encoder_zero_pos - get_left_motor_count()) > DRIVE_TARGET_TICKS;
-                                 right_done = (right_encoder_zero_pos - get_right_motor_count()) > DRIVE_TARGET_TICKS;
+                            left_done = (left_encoder_zero_pos - get_left_motor_count()) > DRIVE_TARGET_TICKS;
+                            right_done = (right_encoder_zero_pos - get_right_motor_count()) > DRIVE_TARGET_TICKS;
 
-                                 if (left_done)
-                                 {
-                                     set_left_motor_pwm(0);
-                                 }
+                            if (left_done)
+                            {
+                                set_left_motor_pwm(0);
+                            }
 
-                                 if (right_done)
-                                 {
-                                     set_right_motor_pwm(0);
-                                 }
+                            if (right_done)
+                            {
+                                set_right_motor_pwm(0);
+                            }
 
-                                 if (left_done && right_done) {
-                                     state = SETUP_TURN90;
-                                 }
-                                 break;
-        } // end of case
+                            if (left_done && right_done) {
+                                state = SETUP_TURN1;
+                            }
+                            break;
+                        case SETUP_BACKWARDS3:
+
+                                              left_encoder_zero_pos = get_left_motor_count();
+                                              right_encoder_zero_pos = get_right_motor_count();
+
+                                              set_left_motor_direction(false);
+                                              set_right_motor_direction(false);
+
+                                              // Start the motors here so we only have to start them once
+                                              set_left_motor_pwm(.4);
+                                              set_right_motor_pwm(.4);
+
+                                              left_done = false;
+                                              right_done = false;
+
+                                              state = BACKWARDS3;
+                                     break;
+
+                                     case BACKWARDS3:
+
+                                         left_done = (left_encoder_zero_pos - get_left_motor_count()) > DRIVE_TARGET_TICKS;
+                                         right_done = (right_encoder_zero_pos - get_right_motor_count()) > DRIVE_TARGET_TICKS;
+
+                                         if (left_done)
+                                         {
+                                             set_left_motor_pwm(0);
+                                         }
+
+                                         if (right_done)
+                                         {
+                                             set_right_motor_pwm(0);
+                                         }
+
+                                         if (left_done && right_done) {
+                                             state = SETUP_TURN90;
+                                         }
+                                         break;
+                }
+        // end of case
+
 
         Clock_Delay1ms(10);
     }
@@ -450,8 +456,6 @@ void Initialize_System()
 
     MAP_GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN0);
 
-    Reflectance_Init();
-
     Bump_Init();
 
     motor_init();
@@ -470,13 +474,17 @@ void Initialize_System()
     MAP_SysTick_enableInterrupt();
 
     MAP_Interrupt_enableMaster();
-}
-/* Initialize I2C communication */
-  Init_I2C_GPIO();
-  I2C_init();
 
-  /* Initialize OPT3001 digital ambient light sensor */
-  OPT3001_init();
+    /* Initialize I2C communication */
+    Init_I2C_GPIO();
+    I2C_init();
+
+    /* Initialize OPT3001 digital ambient light sensor */
+    OPT3001_init();
+
+    //__delay_cycles(100000);
+}
+
 
 /*
  * Handle the SysTick Interrupt.  Currently interrupting at 1/10 second.
