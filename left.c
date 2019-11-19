@@ -137,8 +137,8 @@ int main(void)
         case DRIVEFORWARD:
             set_left_motor_direction(true);
             set_right_motor_direction(true);
-            set_left_motor_pwm(.4);
-            set_right_motor_pwm(.5);
+            set_left_motor_pwm(.3);
+            set_right_motor_pwm(.7);
             if(lux < 10)
             {  set_left_motor_pwm(0);
                 set_right_motor_pwm(0);
